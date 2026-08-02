@@ -6,12 +6,13 @@
     "node": ">=22.13.0"
   },
   "scripts": {
-    "dev": "vinext dev",
-    "build": "vinext build",
-    "start": "vinext start",
-    "test": "npm run build && node --test tests/rendered-html.test.mjs",
-    "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
-    "db:generate": "drizzle-kit generate"
+  "dev": "next dev",
+  "build": "next build",
+  "start": "next start",
+  "test": "npm run build && node --test tests/rendered-html.test.mjs",
+  "lint": "next lint",
+  "db:generate": "drizzle-kit generate"
+
   },
   "dependencies": {
     "drizzle-orm": "0.45.2",
@@ -35,7 +36,6 @@
     "react-server-dom-webpack": "19.2.6",
     "tailwindcss": "4.2.1",
     "typescript": "5.9.3",
-    "vinext": "0.0.50",
     "vite": "8.0.13",
     "wrangler": "4.92.0"
   },
