@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, Clock3, HeartPulse, Mail, MapPin, Menu, Phone, ScanLine, ShieldPlus, Smile, Sparkles, UsersRound, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, CalendarPlus, Clock3, HeartPulse, Mail, MapPin, Menu, Phone, ScanLine, ShieldPlus, Smile, Sparkles, UsersRound, X } from "lucide-react";
 import { FaFacebookF, FaTiktok, FaWhatsapp } from "react-icons/fa6";
 import { useEffect, useRef, useState } from "react";
 import { posts, type BlogPost } from "./blog-content";
@@ -40,8 +40,9 @@ function Header() {
     <div className="topbar"><div className="shell"><div className="topbar-contact"><span><Phone aria-hidden="true" />+977 01-5550000</span><span><Mail aria-hidden="true" />care@aannapurnaadental.com</span></div><div className="topbar-socials" aria-label="Social media"><span role="img" aria-label="Facebook"><FaFacebookF aria-hidden="true" /></span><span role="img" aria-label="TikTok"><FaTiktok aria-hidden="true" /></span><span role="img" aria-label="WhatsApp"><FaWhatsapp aria-hidden="true" /></span></div></div></div>
     <header><div className="shell nav-wrap">
       <Link href="/" className="logo-link" aria-label="Aannapurnaa Dental Clinic home"><img src="/logo.png?v=2" alt="Aannapurnaa Dental Clinic" className="navbar-logo" /></Link>
+      <button className="mobile-booking-shortcut" type="button" aria-label="Book a consultation" onClick={() => window.dispatchEvent(new Event("open-booking"))}><CalendarPlus aria-hidden="true" /><span>Book now</span></button>
       <button className="menu" onClick={() => setOpen(!open)} aria-label="Toggle navigation" aria-expanded={open}>{open ? <X aria-hidden="true" /> : <Menu aria-hidden="true" />}</button>
-      <nav className={open ? "open" : ""}>{nav.map(([label, href]) => <Link key={href} href={href} onClick={() => setOpen(false)}>{label}</Link>)}<button className="button nav-cta" onClick={() => { setOpen(false); window.dispatchEvent(new Event("open-booking")); }}>Book now</button></nav>
+      <nav className={open ? "open" : ""}>{nav.map(([label, href]) => <Link key={href} href={href} onClick={() => setOpen(false)}>{label}</Link>)}<button className="button nav-cta" onClick={() => { setOpen(false); window.dispatchEvent(new Event("open-booking")); }}><CalendarPlus aria-hidden="true" /><span>Book now</span></button></nav>
     </div></header>
   </>;
 }
