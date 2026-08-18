@@ -37,8 +37,9 @@ test("renders the clinic homepage with production metadata and content", async (
 test("renders primary content routes without falling through to a 404", async () => {
   for (const [pathname, expected] of [
     ["/services", /Care for every kind of smile/i],
+    ["/booking", /Let’s plan your visit/i],
     ["/blogs", /Latest posts/i],
-    ["/blogs/dental-implants-questions", /questions worth asking first/i],
+    ["/blogs/dental-implants-nepal-cost-process", /Cost, Process, Recovery/i],
   ]) {
     const response = await render(pathname);
     assert.equal(response.status, 200, `${pathname} should render successfully`);
