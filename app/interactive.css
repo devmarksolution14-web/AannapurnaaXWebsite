@@ -819,6 +819,10 @@ h6 {
   transition: transform .28s ease, border-color .28s ease, box-shadow .28s ease;
 }
 
+.journeys-section .story-1 { background-position: center 20%; }
+.journeys-section .story-2 { background-position: center 12%; }
+.journeys-section .story-3 { background-position: center 15%; }
+
 .journeys-section .story-card::before {
   background: linear-gradient(0deg, rgba(2, 10, 35, .97) 0%, rgba(4, 16, 52, .58) 52%, rgba(3, 12, 45, .08) 82%);
 }
