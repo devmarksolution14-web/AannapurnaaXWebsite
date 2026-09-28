@@ -1,11 +1,8 @@
 import type { Metadata } from "next";
 import { InnerPage } from "../site";
+import { pageMetadata } from "../seo";
 
-export const metadata: Metadata = {
-  title: "Care for every kind of smile",
-  description: "From prevention to complex restoration, every treatment begins with listening.",
-  alternates: { canonical: "/services" },
-};
+export const metadata: Metadata = pageMetadata("services");
 
 export default function ServicesPage() {
   return <InnerPage slug="services" />;

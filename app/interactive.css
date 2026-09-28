@@ -1,6 +1,6 @@
 .hero-visual img {
-  width: 430px;
-  height: 535px;
+  width: 455px;
+  height: 570px;
   object-fit: contain;
   object-position: center bottom;
   clip-path: none;
@@ -48,7 +48,7 @@ footer .footer-logo { box-shadow: 0 14px 30px rgba(5, 25, 100, .18); }
 .hero { padding-bottom: 42px; }
 #home, #about, #services, #dentists, #case-stories, #blogs, #contact { scroll-margin-top: 112px; }
 
-.water-cursor-trail {
+.pulse-cursor-trail {
   position: fixed;
   inset: 0;
   z-index: 850;
@@ -97,11 +97,11 @@ footer .footer-logo { box-shadow: 0 14px 30px rgba(5, 25, 100, .18); }
 
 @media (prefers-reduced-motion: reduce) {
   .hero-blob, .hero-ring, .modal-backdrop, .booking-modal { animation: none !important; }
-  .water-cursor-trail { display: none; }
+  .pulse-cursor-trail { display: none; }
 }
 
 @media (pointer: coarse) {
-  .water-cursor-trail { display: none; }
+  .pulse-cursor-trail { display: none; }
 }
 
 .blog-index { padding-top: 88px; }
@@ -342,7 +342,7 @@ h6 {
 
 .country-code-menu {
   position: absolute;
-  z-index: 80;
+  z-index: 200;
   top: calc(100% + 7px);
   left: 0;
   width: 260px;
@@ -1154,6 +1154,42 @@ h6 {
   margin-bottom: 22px;
 }
 
+.footer-socials {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 18px;
+}
+
+.footer-socials > a {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, .22);
+  border-radius: 50%;
+  background: #fff;
+  color: var(--blue);
+  box-shadow: 0 6px 16px rgba(4, 20, 74, .12);
+  transition: transform .2s ease, box-shadow .2s ease, background-color .2s ease;
+}
+
+.footer-socials > a:hover,
+.footer-socials > a:focus-visible {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(4, 20, 74, .18);
+}
+
+.footer-socials svg {
+  width: 13px;
+  height: 13px;
+}
+
+.footer-socials > a:nth-child(3) svg {
+  width: 16px;
+  height: 16px;
+}
+
 .footer-email {
   display: grid;
   grid-template-columns: 34px minmax(0, 1fr) 18px;
@@ -1274,7 +1310,7 @@ h6 {
   margin-left: auto;
 }
 
-.topbar-socials > span {
+.topbar-socials > a {
   width: 25px;
   height: 25px;
   display: grid !important;
@@ -1285,7 +1321,14 @@ h6 {
   background: #fff;
   color: var(--blue);
   box-shadow: 0 3px 10px rgba(4, 20, 74, .12);
-  cursor: default;
+  cursor: pointer;
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+
+.topbar-socials > a:hover,
+.topbar-socials > a:focus-visible {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(4, 20, 74, .18);
 }
 
 .topbar-socials svg {
@@ -1293,7 +1336,7 @@ h6 {
   height: 12px;
 }
 
-.topbar-socials > span:nth-child(3) svg {
+.topbar-socials > a:nth-child(3) svg {
   width: 15px;
   height: 15px;
   transform: translateY(.2px);
@@ -2616,3 +2659,125 @@ body {
     font-size: 9px;
   }
 }
+
+/* Team carousel — replaces the static team grid so more staff can be added
+   without the section growing indefinitely. Native scroll + snap keeps it
+   smooth, touch-friendly and accessible without a slider library. */
+.team-carousel {
+  position: relative;
+  /* TeamCarousel positions cards with a CSS transform (translateX) on .team-track
+     rather than native scrolling, so this wrapper is the fixed-width viewport that
+     clips everything the track slides out of view — without this, the transform
+     moves the whole track box (a huge flex row of every looped card) off to the
+     left and the section renders blank while the absolutely-positioned nav buttons,
+     being separate siblings, stay put. */
+  overflow: hidden;
+}
+
+.team-track {
+  display: flex;
+  gap: 22px;
+  padding: 2px 2px 6px;
+  cursor: grab;
+  user-select: none;
+  will-change: transform;
+}
+
+.team-track:active {
+  cursor: grabbing;
+}
+
+.team-track .team-card {
+  flex: 0 0 calc((100% - 44px) / 3);
+  min-width: 240px;
+}
+
+.team-track .team-card img {
+  -webkit-user-drag: none;
+}
+
+.team-nav {
+  position: absolute;
+  top: 38%;
+  transform: translateY(-50%);
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--ink);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  box-shadow: 0 14px 32px rgba(9, 22, 60, .16);
+  transition: .25s ease;
+  z-index: 3;
+}
+
+.team-nav svg {
+  width: 20px;
+  height: 20px;
+}
+
+.team-nav:hover,
+.team-nav:focus-visible {
+  background: var(--blue);
+  color: #fff;
+  border-color: var(--blue);
+  transform: translateY(-50%) scale(1.06);
+}
+
+.team-nav:disabled {
+  opacity: .32;
+  cursor: default;
+  box-shadow: none;
+}
+
+.team-nav:disabled:hover {
+  background: #fff;
+  color: var(--ink);
+  transform: translateY(-50%);
+}
+
+.team-nav.prev {
+  left: 10px;
+}
+
+.team-nav.next {
+  right: 10px;
+}
+
+@media (max-width: 900px) {
+  .team-track .team-card {
+    flex-basis: calc((100% - 22px) / 2);
+  }
+}
+
+@media (max-width: 650px) {
+  .team-track {
+    gap: 16px;
+  }
+
+  .team-track .team-card {
+    flex-basis: 78%;
+    min-width: 220px;
+  }
+
+  .team-track .image-wrap {
+    height: 300px;
+  }
+
+  .team-nav {
+    width: 40px;
+    height: 40px;
+  }
+
+  .team-nav.prev {
+    left: 4px;
+  }
+
+  .team-nav.next {
+    right: 4px;
+  }
+}
+

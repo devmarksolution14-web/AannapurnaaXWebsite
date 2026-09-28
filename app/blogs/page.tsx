@@ -1,11 +1,8 @@
 import type { Metadata } from "next";
 import { InnerPage } from "../site";
+import { pageMetadata } from "../seo";
 
-export const metadata: Metadata = {
-  title: "Dental Health Guides for Nepal",
-  description: "Clinically reviewed guides on dental problems, oral cancer risks, whitening, clear aligners, treatment costs and dental implants in Nepal.",
-  alternates: { canonical: "/blogs" },
-};
+export const metadata: Metadata = pageMetadata("blogs");
 
 export default function BlogsPage() {
   return <InnerPage slug="blogs" />;
