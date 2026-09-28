@@ -2681,6 +2681,9 @@ body {
   cursor: grab;
   user-select: none;
   will-change: transform;
+  /* Vertical page scrolling stays native; horizontal gestures go to the carousel. */
+  touch-action: pan-y;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .team-track:active {
@@ -2754,13 +2757,18 @@ body {
 }
 
 @media (max-width: 650px) {
+  /* Full-bleed on phones so the centred card has an even peek of each neighbour. */
+  .team-carousel {
+    margin-inline: calc(50% - 50vw);
+  }
+
   .team-track {
-    gap: 16px;
+    gap: 14px;
   }
 
   .team-track .team-card {
-    flex-basis: 78%;
-    min-width: 220px;
+    flex-basis: 80%;
+    min-width: 0;
   }
 
   .team-track .image-wrap {
@@ -2773,11 +2781,11 @@ body {
   }
 
   .team-nav.prev {
-    left: 4px;
+    left: 12px;
   }
 
   .team-nav.next {
-    right: 4px;
+    right: 12px;
   }
 }
 

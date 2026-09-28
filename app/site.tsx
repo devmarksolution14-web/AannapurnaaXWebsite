@@ -196,7 +196,10 @@ function BrandCursorTrail() {
     const scroll = () => { probe(); wake(); };
     const leave = () => { samples.length = 0; wake(); };
 
-    const drawRibbon = (points: Sample[], now: number, widthScale: number, paint: (alpha: number) => string, strength: number) => {
+    // Tapers to a hairline at both ends — the tail and the cursor tip — so nothing blob-like
+    // ever sits under the pointer; it is thickest a little behind the cursor. Short, slow
+    // movements draw proportionally thinner rather than as a round dab.
+    const drawRibbon = (points: Sample[], now: number, widthScale: number, paint: (alpha: number) => string, strength: number, lengthScale: number) => {
       const count = points.length;
       const left: [number, number][] = [];
       const right: [number, number][] = [];
@@ -210,7 +213,7 @@ function BrandCursorTrail() {
         nx /= length; ny /= length;
         const freshness = 1 - Math.min((now - point.t) / TRAIL_LIFE, 1);
         const along = index / (count - 1);
-        const width = HEAD_WIDTH * widthScale * Math.sin(along * Math.PI / 2) * (.35 + .65 * freshness);
+        const width = HEAD_WIDTH * widthScale * lengthScale * Math.sin(Math.pow(along, 1.5) * Math.PI) * (.35 + .65 * freshness);
         left.push([point.x + nx * width, point.y + ny * width]);
         right.push([point.x - nx * width, point.y - ny * width]);
       }
@@ -218,8 +221,9 @@ function BrandCursorTrail() {
       const head = points[count - 1];
       const gradient = context.createLinearGradient(tail.x, tail.y, head.x, head.y);
       gradient.addColorStop(0, paint(0));
-      gradient.addColorStop(.55, paint(.35 * strength));
-      gradient.addColorStop(1, paint(strength));
+      gradient.addColorStop(.55, paint(.4 * strength));
+      gradient.addColorStop(.85, paint(strength));
+      gradient.addColorStop(1, paint(.5 * strength));
       context.beginPath();
       context.moveTo(left[0][0], left[0][1]);
       for (let index = 1; index < count - 1; index++) {
@@ -246,11 +250,13 @@ function BrandCursorTrail() {
 
       while (samples.length && now - samples[0].t > TRAIL_LIFE) samples.shift();
       if (samples.length > 2 && !pointer.textEntry) {
-        const head = samples[samples.length - 1];
-        if (Math.hypot(head.x - samples[0].x, head.y - samples[0].y) > 4) {
-          drawRibbon(samples, now, 2.6, aura, .28);   // contrast halo
-          drawRibbon(samples, now, 3.4, core, .1);    // soft glow
-          drawRibbon(samples, now, 1, core, .72);     // silk core
+        let pathLength = 0;
+        for (let index = 1; index < samples.length; index++) pathLength += Math.hypot(samples[index].x - samples[index - 1].x, samples[index].y - samples[index - 1].y);
+        if (pathLength > 10) {
+          const lengthScale = Math.min(pathLength / 90, 1);
+          drawRibbon(samples, now, 1.9, aura, .22, lengthScale);  // contrast halo
+          drawRibbon(samples, now, 2.4, core, .08, lengthScale);  // soft glow
+          drawRibbon(samples, now, 1, core, .75, lengthScale);    // silk core
         }
       }
 
@@ -410,24 +416,32 @@ const TEAM_AUTO_ADVANCE_MS = 3000;
 
 function TeamCarousel() {
   const trackRef = useRef<HTMLDivElement>(null);
-  const dragRef = useRef<{ active: boolean; startX: number; startIndex: number; moved: boolean }>({ active: false, startX: 0, startIndex: 0, moved: false });
+  const dragRef = useRef({ active: false, startX: 0, startIndex: 0, moved: false, lastX: 0, lastT: 0, velocity: 0 });
   const indexRef = useRef(team.length);
   const wrapResetTimeoutRef = useRef<number | null>(null);
   const autoTimerRef = useRef<number | null>(null);
   const pausedRef = useRef(false);
   const [index, setIndex] = useState(team.length);
 
-  const cardStep = () => {
+  // Step = card width + the track's actual CSS gap (it shrinks on mobile, so a hard-coded
+  // gap drifts a few px per card and leaves the active card clipped). When only one card
+  // fits (phones), the active card is centred with its neighbours peeking either side.
+  const positionFor = (cardIndex: number) => {
     const track = trackRef.current;
     const firstCard = track?.querySelector<HTMLElement>(".team-card");
-    return firstCard ? firstCard.offsetWidth + 22 : 320;
+    if (!track || !firstCard) return -cardIndex * 320;
+    const gap = parseFloat(window.getComputedStyle(track).columnGap) || 0;
+    const viewport = track.parentElement?.clientWidth ?? track.clientWidth;
+    const card = firstCard.offsetWidth;
+    const centreOffset = card > viewport * .6 ? (viewport - card) / 2 : 0;
+    return -cardIndex * (card + gap) + centreOffset;
   };
 
   const syncTrack = (nextIndex: number, smooth = true) => {
     const track = trackRef.current;
     if (!track) return;
     track.style.transition = smooth ? `transform ${TEAM_TRANSITION_MS}ms cubic-bezier(0.22, 1, 0.36, 1)` : "none";
-    track.style.transform = `translateX(${-nextIndex * cardStep()}px)`;
+    track.style.transform = `translate3d(${positionFor(nextIndex)}px, 0, 0)`;
   };
 
   // The visible list is the team tripled end-to-end so a step can always animate past
@@ -492,50 +506,74 @@ function TeamCarousel() {
     const track = trackRef.current;
     if (!track) return;
 
+    const release = (pointerId: number) => {
+      try { track.releasePointerCapture(pointerId); } catch {
+        // no-op if pointer capture is already released
+      }
+    };
+
     const onPointerDown = (event: PointerEvent) => {
-      dragRef.current = { active: true, startX: event.clientX, startIndex: indexRef.current, moved: false };
+      if (event.pointerType === "mouse" && event.button !== 0) return;
+      const now = performance.now();
+      // A card moves 1:1 with the finger from where it currently is, and autoplay holds
+      // off for the whole gesture so it can never jump the track mid-drag.
+      dragRef.current = { active: true, startX: event.clientX, startIndex: indexRef.current, moved: false, lastX: event.clientX, lastT: now, velocity: 0 };
+      pausedRef.current = true;
       track.style.transition = "none";
       track.setPointerCapture(event.pointerId);
     };
 
     const onPointerMove = (event: PointerEvent) => {
-      if (!dragRef.current.active) return;
-      const delta = event.clientX - dragRef.current.startX;
-      if (Math.abs(delta) > 3) dragRef.current.moved = true;
-      track.style.transform = `translateX(${-dragRef.current.startIndex * cardStep() + delta}px)`;
+      const drag = dragRef.current;
+      if (!drag.active) return;
+      const now = performance.now();
+      const delta = event.clientX - drag.startX;
+      if (Math.abs(delta) > 3) drag.moved = true;
+      if (now > drag.lastT) drag.velocity = drag.velocity * .4 + ((event.clientX - drag.lastX) / (now - drag.lastT)) * .6;
+      drag.lastX = event.clientX;
+      drag.lastT = now;
+      track.style.transform = `translate3d(${positionFor(drag.startIndex) + delta}px, 0, 0)`;
     };
 
-    const onPointerUp = (event?: PointerEvent) => {
-      if (!dragRef.current.active) return;
-      const delta = event ? event.clientX - dragRef.current.startX : 0;
-      dragRef.current.active = false;
-
-      if (Math.abs(delta) > 40) {
-        stepManually(delta < 0 ? 1 : -1);
+    const onPointerUp = (event: PointerEvent) => {
+      const drag = dragRef.current;
+      if (!drag.active) return;
+      drag.active = false;
+      if (event.pointerType !== "mouse") pausedRef.current = false;
+      const delta = event.clientX - drag.startX;
+      const card = track.querySelector<HTMLElement>(".team-card")?.offsetWidth ?? 300;
+      // Advance on a deliberate drag (a fifth of a card) or a quick flick of any length.
+      const flick = Math.abs(drag.velocity) > .35 && Math.abs(delta) > 12 && performance.now() - drag.lastT < 120;
+      if (Math.abs(delta) > card * .2 || flick) {
+        stepManually((flick ? -drag.velocity : -delta) > 0 ? 1 : -1);
       } else {
         syncTrack(indexRef.current, true);
-        if (dragRef.current.moved) armAutoTimer();
+        if (drag.moved) armAutoTimer();
       }
+      release(event.pointerId);
+    };
 
-      if (event) {
-        try { track.releasePointerCapture(event.pointerId); } catch {
-          // no-op if pointer capture is already released
-        }
-      }
+    // The browser took the gesture over (e.g. the visitor is scrolling the page):
+    // settle back onto the current card rather than treating it as a swipe.
+    const onPointerCancel = (event: PointerEvent) => {
+      if (!dragRef.current.active) return;
+      dragRef.current.active = false;
+      pausedRef.current = false;
+      syncTrack(indexRef.current, true);
+      armAutoTimer();
+      release(event.pointerId);
     };
 
     track.addEventListener("pointerdown", onPointerDown);
     track.addEventListener("pointermove", onPointerMove);
     track.addEventListener("pointerup", onPointerUp);
-    track.addEventListener("pointerleave", onPointerUp);
-    track.addEventListener("pointercancel", onPointerUp);
+    track.addEventListener("pointercancel", onPointerCancel);
 
     return () => {
       track.removeEventListener("pointerdown", onPointerDown);
       track.removeEventListener("pointermove", onPointerMove);
       track.removeEventListener("pointerup", onPointerUp);
-      track.removeEventListener("pointerleave", onPointerUp);
-      track.removeEventListener("pointercancel", onPointerUp);
+      track.removeEventListener("pointercancel", onPointerCancel);
     };
   }, []);
 
